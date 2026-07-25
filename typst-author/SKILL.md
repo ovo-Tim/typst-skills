@@ -173,4 +173,31 @@ Common fixes:
 - **"expected content, found ..."**: You're using code where markup is expected - wrap in `#{ }` or use proper syntax.
 - **"expected expression, found ..."**: Missing `#` (or `#(...)`) in markup/content blocks.
 - **"unknown variable"**: Check spelling, ensure imports are correct.
+- **"unclosed delimiter"**: Often caused by `*` before `$` inside content blocks like `[0.5*$x$]` — the `*` starts bold and prevents `]` from closing the content block. Fix: put the whole expression in math mode: `[$0.5 x$]`.
+- **"unexpected hat"**: `$^(N)$` is invalid at the start of math mode because there's no base for the superscript. Use `#super[(N)]` in text, or provide a base: `$x^(N)$`.
+- **"unclosed label"**: `<text>` is label syntax. Escape with backticks: `` `<text>` ``.
+- **"unexpected underscore"** or **"`）` is not valid in code"**: Unquoted multi-letter subscript e.g. `$V_(CC)$` should be `$V_("CC")$`; or `$_(REFQ)$` left dangling in text.
+- **"cell's colspan would exceed available column(s)"**: Table `columns` count doesn't match the sum of `colspan` values in rows.
 - **Array/dictionary errors**: Review syntax - use `()` for both, dictionaries need `key: value`, singleton arrays are `(elem,)`.
+
+### Math mode pitfalls (most common source of errors)
+
+1. **Always quote multi-letter subscripts**: `$V_("CC")$`, `$T_("SOLDER")$`, `$I_("CC1")$`, `$t_("ADL")$`, `$R_("ZQ")$`. Never use `$V_{CC}$` (LaTeX) or `$V_(CC)$` (parentheses) — both treat `CC` as `C*C` (variable multiplication).
+
+2. **Always quote multi-letter identifiers in math**: Units like `$50 "μs"$`, signal names like `$"RDY"^(1)$`, function parameters like `$"Max"("dRttdT")$`. Any two+ letter uppercase sequence must be in `"..."`.
+
+3. **Superscript without a base**: `$^(1)$` fails. Use `#super[(1)]` in text instead. Inside math, provide a base: `$x^((1))$`.
+
+4. **`*` before `$` in content blocks**: `[value*$expr$]` breaks because `*` starts bold. Use `[$value expr$]` instead (wrap entire expression).
+
+5. **Adjacent content blocks**: `[a][b][c]` in argument lists fails — add commas: `[a], [b], [c],`.
+
+6. **Inline image in argument list**: `[#image(...)]` as a table argument fails because block-level content can't appear inline. Use `box(image(...))` without the `#` wrapper and outer `[...]`.
+
+7. **`table.header` does not accept `colspan`/`rowspan`**: Nest `table.cell` inside: `table.header(table.cell(colspan: 3)[Title])`.
+
+8. **`<...>` is label syntax**: Always use backticks: `` `<CMD: 00h>` ``.
+
+9. **`#` in text**: Escape as `\#` when appearing in regular markup (not code).
+
+10. **`_` in text**: Starts emphasis. Escape as `\_` or use backticks for signal names like `` `R/B_n` ``.
